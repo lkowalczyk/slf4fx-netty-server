@@ -1,4 +1,4 @@
-package io.github.krankenwagen.slf4fx;
+package pl.bluetrain.slf4fx;
 
 /**
  * Exception thrown when the incoming ChannelBuffer does not

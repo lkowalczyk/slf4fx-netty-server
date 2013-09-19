@@ -1,7 +1,4 @@
-package io.github.krankenwagen.slf4fx;
-
-import io.github.krankenwagen.slf4fx.message.InboundMessage;
-import io.github.krankenwagen.slf4fx.message.UnknownMessageException;
+package pl.bluetrain.slf4fx;
 
 import java.lang.invoke.MethodHandles;
 
@@ -12,6 +9,9 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import pl.bluetrain.slf4fx.message.InboundMessage;
+import pl.bluetrain.slf4fx.message.UnknownMessageException;
 
 /**
  * Decodes byte sequences to high-level messages.

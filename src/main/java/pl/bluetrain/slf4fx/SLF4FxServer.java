@@ -1,4 +1,4 @@
-package io.github.krankenwagen.slf4fx;
+package pl.bluetrain.slf4fx;
 
 import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;

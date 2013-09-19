@@ -2,17 +2,15 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>io.github.krankenwagen</groupId>
+	<groupId>pl.bluetrain</groupId>
 	<artifactId>slf4fx-netty-server</artifactId>
 	<packaging>jar</packaging>
 
 	<name>slf4fx-netty-server</name>
 
   <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>1.7</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <user.name>krankenwagen</user.name>
   </properties>
   
   <build>
@@ -54,6 +52,6 @@
         <scope>compile</scope>
     </dependency>
   </dependencies>
-  <url>https://github.com/krankenwagen/slf4fx-netty-server</url>
-  <version>0.1.0</version>
+  <url>https://github.com/lkowalczyk/slf4fx-netty-server</url>
+  <version>0.2.0</version>
 </project>

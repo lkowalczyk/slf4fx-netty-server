@@ -1,10 +1,10 @@
-package io.github.krankenwagen.slf4fx;
-
-import io.github.krankenwagen.slf4fx.message.AccessResponse;
+package pl.bluetrain.slf4fx;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+
+import pl.bluetrain.slf4fx.message.AccessResponse;
 
 /**
  * Encodes high-level messages as byte sequences.

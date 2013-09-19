@@ -1,13 +1,13 @@
-package io.github.krankenwagen.slf4fx.message;
-
-import io.github.krankenwagen.slf4fx.BufferUnderflowException;
-import io.github.krankenwagen.slf4fx.MessageType;
+package pl.bluetrain.slf4fx.message;
 
 import java.lang.invoke.MethodHandles;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import pl.bluetrain.slf4fx.BufferUnderflowException;
+import pl.bluetrain.slf4fx.MessageType;
 
 public class LogRecord extends InboundMessage
 {

@@ -1,9 +1,9 @@
-package io.github.krankenwagen.slf4fx.message;
-
-import io.github.krankenwagen.slf4fx.BufferUnderflowException;
-import io.github.krankenwagen.slf4fx.MessageType;
+package pl.bluetrain.slf4fx.message;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+
+import pl.bluetrain.slf4fx.BufferUnderflowException;
+import pl.bluetrain.slf4fx.MessageType;
 
 public class AccessRequest extends InboundMessage
 {

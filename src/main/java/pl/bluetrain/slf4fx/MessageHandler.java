@@ -1,8 +1,4 @@
-package io.github.krankenwagen.slf4fx;
-
-import io.github.krankenwagen.slf4fx.message.AccessRequest;
-import io.github.krankenwagen.slf4fx.message.AccessResponse;
-import io.github.krankenwagen.slf4fx.message.LogRecord;
+package pl.bluetrain.slf4fx;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
@@ -14,6 +10,10 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import pl.bluetrain.slf4fx.message.AccessRequest;
+import pl.bluetrain.slf4fx.message.AccessResponse;
+import pl.bluetrain.slf4fx.message.LogRecord;
 
 class MessageHandler extends SimpleChannelHandler
 {

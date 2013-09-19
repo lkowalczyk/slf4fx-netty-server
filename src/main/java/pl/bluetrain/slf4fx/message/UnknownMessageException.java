@@ -1,4 +1,4 @@
-package io.github.krankenwagen.slf4fx.message;
+package pl.bluetrain.slf4fx.message;
 
 @SuppressWarnings("serial")
 public class UnknownMessageException extends Exception

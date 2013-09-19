@@ -1,6 +1,4 @@
-package io.github.krankenwagen.slf4fx.message;
-
-import io.github.krankenwagen.slf4fx.BufferUnderflowException;
+package pl.bluetrain.slf4fx.message;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
@@ -13,6 +11,8 @@ import java.nio.charset.CodingErrorAction;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import pl.bluetrain.slf4fx.BufferUnderflowException;
 
 public abstract class InboundMessage
 {
