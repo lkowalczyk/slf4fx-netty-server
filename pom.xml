@@ -53,5 +53,5 @@
     </dependency>
   </dependencies>
   <url>https://github.com/lkowalczyk/slf4fx-netty-server</url>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </project>
