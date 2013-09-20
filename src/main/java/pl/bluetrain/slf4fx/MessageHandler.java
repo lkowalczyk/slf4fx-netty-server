@@ -32,36 +32,11 @@ class MessageHandler extends SimpleChannelHandler
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
         throws Exception
     {
-        if (e.getMessage() instanceof AccessRequest)
-        {
-            AccessRequest request = (AccessRequest) e.getMessage();
-            boolean grant;
-            if (credentials.isEmpty())
-            {
-                grant = true;
-            }
-            else
-            {
-                String secret = credentials.get(request.getApplicationId());
-                grant = secret != null && secret.equals(request.getSecret());
-            }
-            Channels.write(e.getChannel(), new AccessResponse(grant));
-            if (grant)
-            {
-                log.info("Access request ({}:{}): granted", request.getApplicationId(), request.getSecret());
-                this.applicationId = request.getApplicationId();
-            }
-            else
-            {
-                log.warn("Access request ({}:{}): rejected", request.getApplicationId(), request.getSecret());
-            }
-        }
-        
         if (e.getMessage() instanceof LogRecord)
         {
             if (applicationId == null)
             {
-                log.warn("Message of type 3 (log record) not preceded by a message of type 1 (access request) or invalid credentials, ignoring message.");
+                log.debug("Message of type 3 (log record) not preceded by a message of type 1 (access request) or invalid credentials, ignoring message.");
                 return;
             }
             LogRecord logRecord = (LogRecord) e.getMessage();
@@ -69,8 +44,7 @@ class MessageHandler extends SimpleChannelHandler
             if (categoryPrefix != null)
                 category.append(categoryPrefix);
             category.append('.');
-            category.append(applicationId).append('.')
-                    .append(logRecord.getCategory());
+            category.append(applicationId).append('.').append(logRecord.getCategory());
             Logger logger = LoggerFactory.getLogger(category.toString());
             switch (logRecord.getLevel())
             {
@@ -90,6 +64,26 @@ class MessageHandler extends SimpleChannelHandler
                 default:
                     logger.info(logRecord.getMessage());
                     break;
+            }
+        }
+
+        if (e.getMessage() instanceof AccessRequest)
+        {
+            AccessRequest request = (AccessRequest) e.getMessage();
+            
+            boolean grant = credentials.isEmpty()
+                    || (credentials.containsKey(request.getApplicationId()) && credentials.get(
+                            request.getApplicationId()).equals(request.getSecret()));
+            
+            Channels.write(e.getChannel(), new AccessResponse(grant));
+            if (grant)
+            {
+                log.debug("Access request ({}:{}): granted", request.getApplicationId(), request.getSecret());
+                this.applicationId = request.getApplicationId();
+            }
+            else
+            {
+                log.info("Access request ({}:{}): rejected", request.getApplicationId(), request.getSecret());
             }
         }
     }

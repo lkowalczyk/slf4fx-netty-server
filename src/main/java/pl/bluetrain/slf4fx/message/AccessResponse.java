@@ -1,9 +1,13 @@
 package pl.bluetrain.slf4fx.message;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import pl.bluetrain.slf4fx.MessageType;
 
-public class AccessResponse
+/**
+ * Informs about accepting or rejecting the access request.
+ * 
+ * @author lkowalczyk
+ */
+public class AccessResponse extends OutboundMessage
 {
     private final boolean accessGranted;
     
@@ -16,11 +20,11 @@ public class AccessResponse
     {
         return accessGranted;
     }
-
-    public ChannelBuffer asChannelBuffer()
+    
+    @Override
+    protected void doEncode()
     {
-        return ChannelBuffers.wrappedBuffer(
-                new byte[] { (byte) 2 },
-                new byte[] { accessGranted ? (byte) 1 : (byte) 0 });
+        writeByte(MessageType.ACCESS_RESPONSE.getTag());
+        writeByte(accessGranted ? 1 : 0);
     }
 }

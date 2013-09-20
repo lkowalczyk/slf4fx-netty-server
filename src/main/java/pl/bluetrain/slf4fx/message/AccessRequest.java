@@ -1,12 +1,22 @@
 package pl.bluetrain.slf4fx.message;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-
-import pl.bluetrain.slf4fx.BufferUnderflowException;
 import pl.bluetrain.slf4fx.MessageType;
 
 public class AccessRequest extends InboundMessage
 {
+    static Decoder decoder()
+    {
+        return new Decoder(MessageType.ACCESS_REQUEST)
+        {
+            @Override
+            InboundMessage doDecode()
+                throws BufferUnderflowException
+            {
+                return new AccessRequest(readUTF(), readUTF());
+            }
+        };
+    }
+
     private final String applicationId;
     private final String secret;
     
@@ -67,36 +77,5 @@ public class AccessRequest extends InboundMessage
     public String toString()
     {
         return "AccessRequest [applicationId=" + applicationId + ", secret=" + secret + "]";
-    }
-    
-    static Decoder decoder()
-    {
-        return new Decoder()
-        {
-            @Override
-            InboundMessage decode(ChannelBuffer buffer)
-                throws BufferUnderflowException
-            {
-                buffer.markReaderIndex();
-                try
-                {
-                    int tag = buffer.readByte() & 0xff;
-                    if (tag != MessageType.ACCESS_REQUEST.getTag())
-                    {
-                        buffer.resetReaderIndex();
-                        return null;
-                    }
-                    
-                    String applicationId = readUTF(buffer);
-                    String secret = readUTF(buffer);
-                    return new AccessRequest(applicationId, secret);
-                }
-                catch (IndexOutOfBoundsException e)
-                {
-                    buffer.resetReaderIndex();
-                    throw new BufferUnderflowException(e);
-                }
-            }
-        };
     }
 }

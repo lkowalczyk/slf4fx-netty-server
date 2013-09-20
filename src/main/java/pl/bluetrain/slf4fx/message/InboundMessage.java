@@ -12,42 +12,104 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pl.bluetrain.slf4fx.BufferUnderflowException;
+import pl.bluetrain.slf4fx.MessageType;
 
+/**
+ * Base class for incoming messages.
+ * 
+ * @author lkowalczyk
+ */
 public abstract class InboundMessage
 {
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    private static final InboundMessage.Decoder[] decoders = { AccessRequest.decoder(), LogRecord.decoder() };
+    private static final Decoder[] decoders = { AccessRequest.decoder(), LogRecord.decoder() };
     
-    public static InboundMessage decode(ChannelBuffer buffer) throws BufferUnderflowException, UnknownMessageException
+    /**
+     * This method attempts to decode the message using all its
+     * registered decoders in turn. Null is returned if the buffer
+     * does not have enough data to fully construct a message.
+     * 
+     * @return InboundMessage or null.
+     * @throws UnknownMessageException If no suitable decoder could be found.
+     */
+    public static InboundMessage decode(ChannelBuffer buffer) throws UnknownMessageException
     {
+        if (!buffer.readable())
+            return null;
+        
         for (InboundMessage.Decoder decoder : decoders)
         {
-            InboundMessage im = decoder.decode(buffer);
-            if (im != null)
-                return im;
+            if (decoder.isSuitable(buffer))
+            {
+                return decoder.decode(buffer);
+            }
         }
-        buffer.markReaderIndex();
-        int tag = buffer.readByte();
-        buffer.resetReaderIndex();
-        throw new UnknownMessageException(tag);
+        throw new UnknownMessageException(buffer.getUnsignedByte(0));
     }
     
     static abstract class Decoder
     {
+        private final MessageType tag;
+        private static ThreadLocal<ChannelBuffer> buffer = new ThreadLocal<>();
+        
+        Decoder(MessageType tag)
+        {
+            if (tag == null)
+                throw new NullPointerException("tag");
+            this.tag = tag;
+        }
+
+        abstract InboundMessage doDecode() throws BufferUnderflowException;
+        
         /**
-         * Returns an InboundMessage instance or null, if the message is of
-         * different type.
+         * Returns {@code true} if the first byte in the provided buffer
+         * is identical with this decoder's tag value.
+         * 
+         * @throws IndexOutOfBoundException if the buffer has no readable bytes.
+         * @return true if the message in buffer can be decoded with this decoder.
+         */
+        final boolean isSuitable(ChannelBuffer buffer)
+        {
+            return buffer.getUnsignedByte(0) == tag.getTag();
+        }
+        
+        /**
+         * Returns an InboundMessage instance or null, if the buffer does
+         * not have enough data to construct a complete message.
          * 
          * @return InboundMessage or null.
-         * @throws BufferUnderflowException
-         *             If there is not enough data in the buffer to construct a
-         *             complete message. The buffer marker is left intact in
-         *             this case.
          */
-        abstract InboundMessage decode(ChannelBuffer buffer)
-            throws BufferUnderflowException;
+        InboundMessage decode(ChannelBuffer buf)
+        {
+            if (buf == null)
+                throw new NullPointerException("null");
+            try
+            {
+                buffer.set(buf);
+                buffer.get().markReaderIndex();
+                buffer.get().readByte(); // tag
+                return doDecode();
+            }
+            catch (BufferUnderflowException e)
+            {
+                buffer.get().resetReaderIndex();
+            }
+            buffer.set(null);
+            return null;
+        }
+        
+        protected int readInt() throws BufferUnderflowException
+        {
+            try
+            {
+                return buffer.get().readInt();
+            }
+            catch (IndexOutOfBoundsException e)
+            {
+                throw new BufferUnderflowException(e);
+            }
+        }
         
         /**
          * Reads data written to the socket using ActionScript's Socket.writeUTF
@@ -61,14 +123,14 @@ public abstract class InboundMessage
          * @return
          * @throws BufferUnderflowException
          */
-        protected static String readUTF(ChannelBuffer buffer)
+        protected String readUTF()
             throws BufferUnderflowException
         {
             try
             {
-                int length = buffer.readShort() & 0xffff;
+                int length = buffer.get().readShort() & 0xffff;
                 ByteBuffer bb = ByteBuffer.allocate(length);
-                buffer.readBytes(bb);
+                buffer.get().readBytes(bb);
                 bb.flip();
                 
                 CharBuffer cb;

@@ -26,18 +26,9 @@ class MessageFrameDecoder extends FrameDecoder
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer)
         throws Exception
     {
-        // Mark current position in case we need to unfold when not enough bytes is available
-        buffer.markReaderIndex();
-
         try
         {
             return InboundMessage.decode(buffer);
-        }
-        catch (BufferUnderflowException e)
-        {
-            // Reset buffer position and wait for more data in the next call
-            buffer.resetReaderIndex();
-            return null;
         }
         catch (UnknownMessageException e)
         {

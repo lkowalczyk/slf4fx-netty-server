@@ -2,17 +2,56 @@ package pl.bluetrain.slf4fx.message;
 
 import java.lang.invoke.MethodHandles;
 
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pl.bluetrain.slf4fx.BufferUnderflowException;
 import pl.bluetrain.slf4fx.MessageType;
 
 public class LogRecord extends InboundMessage
 {
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     
+    static Decoder decoder()
+    {
+        return new Decoder(MessageType.LOG_RECORD)
+        {
+            @Override
+            InboundMessage doDecode()
+                throws BufferUnderflowException
+            {
+                return new LogRecord(readUTF(), readLevel(), readUTF());
+            }
+            
+            private Level readLevel()
+                throws BufferUnderflowException
+            {
+                try
+                {
+                    int levelValue = readInt();
+                    switch (levelValue)
+                    {
+                        case 0:
+                            return Level.ERROR;
+                        case 1:
+                            return Level.WARN;
+                        case 2:
+                            return Level.INFO;
+                        case 3:
+                            return Level.DEBUG;
+                        default:
+                            log.debug("Unknown logging level: {}", levelValue);
+                            return Level.INFO;
+                    }
+                }
+                catch (IndexOutOfBoundsException e)
+                {
+                    throw new BufferUnderflowException(e);
+                }
+            }
+            
+        };
+    }
+
     public enum Level
     {
         ERROR, WARN, INFO, DEBUG
@@ -88,65 +127,5 @@ public class LogRecord extends InboundMessage
     public String toString()
     {
         return "LogRecord [log=" + log + ", category=" + category + ", level=" + level + ", message=" + message + "]";
-    }
-    
-    static Decoder decoder()
-    {
-        return new Decoder()
-        {
-            @Override
-            InboundMessage decode(ChannelBuffer buffer)
-                throws BufferUnderflowException
-            {
-                buffer.markReaderIndex();
-                try
-                {
-                    int tag = buffer.readByte() & 0xff;
-                    if (tag != MessageType.LOG_RECORD.getTag())
-                    {
-                        buffer.resetReaderIndex();
-                        return null;
-                    }
-                    
-                    String category = readUTF(buffer);
-                    Level level = readLevel(buffer);
-                    String message = readUTF(buffer);
-                    return new LogRecord(category, level, message);
-                }
-                catch (IndexOutOfBoundsException e)
-                {
-                    buffer.resetReaderIndex();
-                    throw new BufferUnderflowException(e);
-                }
-            }
-            
-            private Level readLevel(ChannelBuffer buffer)
-                throws BufferUnderflowException
-            {
-                try
-                {
-                    int levelValue = buffer.readInt();
-                    switch (levelValue)
-                    {
-                        case 0:
-                            return Level.ERROR;
-                        case 1:
-                            return Level.WARN;
-                        case 2:
-                            return Level.INFO;
-                        case 3:
-                            return Level.DEBUG;
-                        default:
-                            log.warn("Unknown logging level: {}", levelValue);
-                            return Level.INFO;
-                    }
-                }
-                catch (IndexOutOfBoundsException e)
-                {
-                    throw new BufferUnderflowException(e);
-                }
-            }
-            
-        };
     }
 }
