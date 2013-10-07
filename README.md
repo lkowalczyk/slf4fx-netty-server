@@ -7,4 +7,6 @@ The original [SLF4Fx](https://code.google.com/p/slf4fx/) is a framework that all
 
 This project only implements the server part while employing [Netty](http://netty.io/) and is compatible with the SLF4Fx client 1.12.
 
-Java 7 is required.
+Requirements:
+- JDK 1.5 or newer
+- Netty 3.6.6
