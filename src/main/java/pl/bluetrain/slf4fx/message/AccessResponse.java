@@ -1,6 +1,5 @@
 package pl.bluetrain.slf4fx.message;
 
-import pl.bluetrain.slf4fx.MessageType;
 
 /**
  * Informs about accepting or rejecting the access request.

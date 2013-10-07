@@ -1,31 +1,26 @@
 package pl.bluetrain.slf4fx.message;
 
-import pl.bluetrain.slf4fx.MessageType;
 
 public class AccessRequest extends InboundMessage
 {
-    static Decoder decoder()
+    private String applicationId;
+    private String secret;
+
+    @Override
+    protected MessageType getType()
     {
-        return new Decoder(MessageType.ACCESS_REQUEST)
-        {
-            @Override
-            InboundMessage doDecode()
-                throws BufferUnderflowException
-            {
-                return new AccessRequest(readUTF(), readUTF());
-            }
-        };
+        return MessageType.ACCESS_REQUEST;
     }
 
-    private final String applicationId;
-    private final String secret;
-    
-    public AccessRequest(String applicationId, String secret)
+    @Override
+    protected void doDecode()
+        throws BufferUnderrunException
     {
-        this.applicationId = applicationId;
-        this.secret = secret;
+        readByte();
+        applicationId = readUTF();
+        secret = readUTF();
     }
-    
+
     public String getApplicationId()
     {
         return applicationId;
