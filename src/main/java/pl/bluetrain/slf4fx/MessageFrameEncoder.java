@@ -13,6 +13,7 @@ import pl.bluetrain.slf4fx.message.OutboundMessage;
  */
 public class MessageFrameEncoder extends OneToOneEncoder
 {
+    
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg)
         throws Exception
@@ -21,7 +22,7 @@ public class MessageFrameEncoder extends OneToOneEncoder
         {
             return ((OutboundMessage) msg).asChannelBuffer();
         }
-
+        
         return msg;
     }
 }

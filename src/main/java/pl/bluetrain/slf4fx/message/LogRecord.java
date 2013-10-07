@@ -3,67 +3,60 @@ package pl.bluetrain.slf4fx.message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pl.bluetrain.slf4fx.MessageType;
-
 public class LogRecord extends InboundMessage
 {
     private static final Logger log = LoggerFactory.getLogger(LogRecord.class);
     
-    static Decoder decoder()
-    {
-        return new Decoder(MessageType.LOG_RECORD)
-        {
-            @Override
-            InboundMessage doDecode()
-                throws BufferUnderflowException
-            {
-                return new LogRecord(readUTF(), readLevel(), readUTF());
-            }
-            
-            private Level readLevel()
-                throws BufferUnderflowException
-            {
-                try
-                {
-                    int levelValue = readInt();
-                    switch (levelValue)
-                    {
-                        case 0:
-                            return Level.ERROR;
-                        case 1:
-                            return Level.WARN;
-                        case 2:
-                            return Level.INFO;
-                        case 3:
-                            return Level.DEBUG;
-                        default:
-                            log.debug("Unknown logging level: {}", levelValue);
-                            return Level.INFO;
-                    }
-                }
-                catch (IndexOutOfBoundsException e)
-                {
-                    throw new BufferUnderflowException(e);
-                }
-            }
-            
-        };
-    }
-
     public enum Level
     {
         ERROR, WARN, INFO, DEBUG
     }
     
-    private final String category;
-    private final Level level;
-    private final String message;
+    private String category;
+    private Level level;
+    private String message;
     
-    private LogRecord(String category, Level level, String message)
+    @Override
+    protected MessageType getType()
     {
-        this.category = category;
-        this.level = level;
-        this.message = message;
+        return MessageType.LOG_RECORD;
+    }
+    
+    @Override
+    protected void doDecode()
+        throws BufferUnderrunException
+    {
+        readByte();
+        category = readUTF();
+        level = readLevel();
+        message = readUTF();
+    }
+    
+    private Level readLevel()
+        throws BufferUnderrunException
+    {
+        try
+        {
+            int levelValue = readInt();
+            switch (levelValue)
+            {
+                case 0:
+                    return Level.ERROR;
+                case 1:
+                    return Level.WARN;
+                case 2:
+                    return Level.INFO;
+                case 3:
+                    return Level.DEBUG;
+                default:
+                    log.debug("Unknown logging level: {}", levelValue);
+                    return Level.INFO;
+            }
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            throw new BufferUnderrunException();
+        }
     }
     
     public String getCategory()
@@ -124,6 +117,6 @@ public class LogRecord extends InboundMessage
     @Override
     public String toString()
     {
-        return "LogRecord [log=" + log + ", category=" + category + ", level=" + level + ", message=" + message + "]";
+        return "LogRecord [category=" + category + ", level=" + level + ", message=" + message + "]";
     }
 }

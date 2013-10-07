@@ -11,8 +11,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pl.bluetrain.slf4fx.MessageType;
-
 /**
  * Base class for incoming messages.
  * 
@@ -22,152 +20,150 @@ public abstract class InboundMessage
 {
     private static final Logger log = LoggerFactory.getLogger(InboundMessage.class);
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    private static final Decoder[] decoders = { AccessRequest.decoder(), LogRecord.decoder() };
-    
+    private ChannelBuffer buffer;
+
     /**
-     * This method attempts to decode the message using all its
-     * registered decoders in turn. Null is returned if the buffer
-     * does not have enough data to fully construct a message.
-     * 
-     * @return InboundMessage or null.
-     * @throws UnknownMessageException If no suitable decoder could be found.
+     * Attempts parsing a message.
+     * @return An concrete InboundMessage descendant or null if the message is
+     *  of different type than the instantiated class.
+     * @throws BufferUnderrunException if there is not enough data in the ChannelBuffer.
+     * @throws MalformedMessageException if the message is of correct type but cannot be parsed.
      */
-    public static InboundMessage decode(ChannelBuffer buffer) throws UnknownMessageException
+    public InboundMessage tryDecode(ChannelBuffer buffer) throws BufferUnderrunException, MalformedMessageException
     {
-        if (!buffer.readable())
+        if (buffer == null)
+            throw new NullPointerException("buffer");
+        if (false == buffer.readable())
+            throw new BufferUnderrunException();
+        if (getType().getTag() != buffer.getUnsignedByte(0))
             return null;
-        
-        for (InboundMessage.Decoder decoder : decoders)
+        this.buffer = buffer;
+        buffer.markReaderIndex();
+        try
         {
-            if (decoder.isSuitable(buffer))
-            {
-                return decoder.decode(buffer);
-            }
+            doDecode();
         }
-        throw new UnknownMessageException(buffer.getUnsignedByte(0));
+        catch (BufferUnderrunException e)
+        {
+            buffer.resetReaderIndex();
+            throw e;
+        }
+        catch (MalformedMessageException e)
+        {
+            buffer.resetReaderIndex();
+            throw e;
+        }
+        return this;
     }
     
-    static abstract class Decoder
-    {
-        private final MessageType tag;
-        private static ThreadLocal<ChannelBuffer> buffer = new ThreadLocal<ChannelBuffer>();
-        
-        Decoder(MessageType tag)
-        {
-            if (tag == null)
-                throw new NullPointerException("tag");
-            this.tag = tag;
-        }
+    protected abstract MessageType getType();
 
-        abstract InboundMessage doDecode() throws BufferUnderflowException;
-        
-        /**
-         * Returns {@code true} if the first byte in the provided buffer
-         * is identical with this decoder's tag value.
-         * 
-         * @throws IndexOutOfBoundException if the buffer has no readable bytes.
-         * @return true if the message in buffer can be decoded with this decoder.
-         */
-        final boolean isSuitable(ChannelBuffer buffer)
+    /**
+     * Attempts parsing a message.
+     * @return true if the message was successfully parsed, or false if the message
+     *  is of different type than the instantiated class.
+     * @throws BufferUnderrunException if there is not enough data in the ChannelBuffer.
+     */
+    protected abstract void doDecode() throws BufferUnderrunException, MalformedMessageException;
+
+    /**
+     * Reads and returns an unsigned byte.
+     * @throws BufferUnderrunException
+     */
+    protected int readByte() throws BufferUnderrunException
+    {
+        try
         {
-            return buffer.getUnsignedByte(0) == tag.getTag();
+            return buffer.readByte() & 0xff; // remove sign
         }
-        
-        /**
-         * Returns an InboundMessage instance or null, if the buffer does
-         * not have enough data to construct a complete message.
-         * 
-         * @return InboundMessage or null.
-         */
-        InboundMessage decode(ChannelBuffer buf)
+        catch (IndexOutOfBoundsException e)
         {
-            if (buf == null)
-                throw new NullPointerException("null");
+            throw new BufferUnderrunException();
+        }
+    }
+    
+    protected byte[] readBytes(int length) throws BufferUnderrunException
+    {
+        if (buffer.readableBytes() < length)
+            throw new BufferUnderrunException();
+        byte[] result = new byte[length];
+        buffer.readBytes(result);
+        return result;
+    }
+
+    /**
+     * Reads and returns a 32-bit signed integer.
+     * @throws BufferUnderrunException
+     */
+    protected int readInt() throws BufferUnderrunException
+    {
+        try
+        {
+            return buffer.readInt();
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            throw new BufferUnderrunException();
+        }
+    }
+    
+    /**
+     * Reads data written to the socket using ActionScript's Socket.writeUTF
+     * method. First comes length as a 16-bit unsigned integers, followed by
+     * UTF-8 payload of the specified length.
+     * 
+     * If an invalid UTF-8 sequence is found, it is replaced with a space
+     * and a warning is logged.
+     * 
+     * @param buffer
+     * @return
+     * @throws BufferUnderrunException
+     */
+    protected String readUTF()
+        throws BufferUnderrunException
+    {
+        try
+        {
+            int length = buffer.readShort() & 0xffff;
+            ByteBuffer bb = ByteBuffer.allocate(length);
+            buffer.readBytes(bb);
+            bb.flip();
+            
+            CharBuffer cb;
             try
             {
-                buffer.set(buf);
-                buffer.get().markReaderIndex();
-                buffer.get().readByte(); // tag
-                return doDecode();
+                CharsetDecoder decoder = UTF_8.newDecoder();
+                decoder.onMalformedInput(CodingErrorAction.REPORT);
+                cb = decoder.decode(bb);
             }
-            catch (BufferUnderflowException e)
+            catch (CharacterCodingException e)
             {
-                buffer.get().resetReaderIndex();
-            }
-            buffer.set(null);
-            return null;
-        }
-        
-        protected int readInt() throws BufferUnderflowException
-        {
-            try
-            {
-                return buffer.get().readInt();
-            }
-            catch (IndexOutOfBoundsException e)
-            {
-                throw new BufferUnderflowException(e);
-            }
-        }
-        
-        /**
-         * Reads data written to the socket using ActionScript's Socket.writeUTF
-         * method. First comes length as a 16-bit unsigned integers, followed by
-         * UTF-8 payload of the specified length.
-         * 
-         * If an invalid UTF-8 sequence is found, it is replaced with a space
-         * and a warning is logged.
-         * 
-         * @param buffer
-         * @return
-         * @throws BufferUnderflowException
-         */
-        protected String readUTF()
-            throws BufferUnderflowException
-        {
-            try
-            {
-                int length = buffer.get().readShort() & 0xffff;
-                ByteBuffer bb = ByteBuffer.allocate(length);
-                buffer.get().readBytes(bb);
-                bb.flip();
-                
-                CharBuffer cb;
+                // We wanted this exception by setting CodingErrorAction.REPORT,
+                // now we can log a warning and decode the invalid
+                // data while replacing invalid sequences with spaces.
+                log.warn("{}", e.toString());
+                CharsetDecoder decoder = UTF_8.newDecoder();
+                decoder.onMalformedInput(CodingErrorAction.REPLACE);
+                decoder.replaceWith(" ");
                 try
                 {
-                    CharsetDecoder decoder = UTF_8.newDecoder();
-                    decoder.onMalformedInput(CodingErrorAction.REPORT);
                     cb = decoder.decode(bb);
                 }
-                catch (CharacterCodingException e)
+                catch (CharacterCodingException cce)
                 {
-                    // We wanted this by setting CodingErrorAction.REPORT,
-                    // now we can log a warning and decode the invalid
-                    // data while replacing invalid sequences with spaces.
-                    log.warn("{}", e.toString());
-                    CharsetDecoder decoder = UTF_8.newDecoder();
-                    decoder.onMalformedInput(CodingErrorAction.REPLACE);
-                    decoder.replaceWith(" ");
-                    try
-                    {
-                        cb = decoder.decode(bb);
-                    }
-                    catch (CharacterCodingException cce)
-                    {
-                        // should never happen (CodingErrorAction.REPLACE)
-                        log.error(cce.toString(), cce);
-                        cb = CharBuffer.allocate(0);
-                    }
+                    // should never happen (CodingErrorAction.REPLACE)
+                    log.error(cce.toString(), cce);
+                    cb = CharBuffer.allocate(0);
                 }
-                
-                String result = cb.toString();
-                
-                return result;
             }
-            catch (IndexOutOfBoundsException e)
-            {
-                throw new BufferUnderflowException(e);
-            }
+            
+            String result = cb.toString();
+            
+            return result;
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            throw new BufferUnderrunException();
         }
     }
 }

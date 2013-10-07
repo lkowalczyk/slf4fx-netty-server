@@ -41,11 +41,12 @@ public class SLF4FxServer
 {
     private final Logger log = LoggerFactory.getLogger(SLF4FxServer.class);
     
+    private String flexPolicyResponse;
     private SocketAddress localAddress = new InetSocketAddress("localhost", 18888);
-    private Map<String, String> credentials = new HashMap<String,String>();
+    private Map<String, String> credentials = new HashMap<String, String>();
     private int sessionTimeout = 60;
     private int workersCount = 1;
-    private Map<String, Object> bootstrapOptions = new HashMap<String,Object>();
+    private Map<String, Object> bootstrapOptions = new HashMap<String, Object>();
     private String categoryPrefix = "slf4fx";
     
     private ServerBootstrap serverBootstrap;
@@ -82,17 +83,17 @@ public class SLF4FxServer
         bootstrapOptions.put("child.tcpNoDelay", true);
         bootstrapOptions.put("child.keepAlive", true);
         
-        this.serverBootstrap.setPipelineFactory(new ChannelPipelineFactory()
-        {
-            public ChannelPipeline getPipeline()
-                throws Exception
-            {
-                MessageHandler handler = new MessageHandler(SLF4FxServer.this.categoryPrefix,
-                        SLF4FxServer.this.credentials);
-                return Channels.pipeline(new MessageFrameDecoder(), handler, new MessageFrameEncoder());
-            }
-        });
-        this.serverBootstrap.setOptions(serverBootstrapOptions);
+        //        this.serverBootstrap.setPipelineFactory(new ChannelPipelineFactory()
+        //        {
+        //            public ChannelPipeline getPipeline()
+        //                throws Exception
+        //            {
+        //                MessageHandler handler = new MessageHandler(SLF4FxServer.this.categoryPrefix,
+        //                        SLF4FxServer.this.credentials);
+        //                return Channels.pipeline(new MessageFrameDecoder(), handler, new MessageFrameEncoder());
+        //            }
+        //        });
+        //        this.serverBootstrap.setOptions(serverBootstrapOptions);
     }
     
     public void setDefaultLocalAddress(final SocketAddress localAddress)
@@ -136,7 +137,7 @@ public class SLF4FxServer
             if (entry.getKey() == null || entry.getValue() == null)
                 throw new IllegalArgumentException("Each credential must have a non-null applicationId and secret");
         }
-        this.credentials = new HashMap<String,String>(credentials);
+        this.credentials = new HashMap<String, String>(credentials);
     }
     
     public Map<String, String> getCredentials()
@@ -184,11 +185,12 @@ public class SLF4FxServer
     
     public void setFlexPolicyResponse(final String flexPolicyResponse)
     {
+        this.flexPolicyResponse = flexPolicyResponse;
     }
     
     public String getFlexPolicyResponse()
     {
-        return null;
+        return flexPolicyResponse;
     }
     
     public void setReaderBufferSize(final int readerBufferSize)
@@ -221,23 +223,24 @@ public class SLF4FxServer
     
     /**
      * Starts this SLF4FxServer. An instance cannot be started more than once.
-     * Second and subsequent invocations of this method will throw
-     * IllegalStateException.
+     * Second and subsequent invocations of this method without an intervening
+     * {@link #stop()} will have no effect.
      * 
      * @throws ChannelException
      *             if failed to create a new channel and bind it to the local
      *             address.
-     * @throws IllegalStateException
-     *             if this method is called again without an intervening
-     *             {@link #stop()}.
      */
     public synchronized void start()
     {
         if (serverBootstrap != null)
         {
-            
-            throw new IllegalStateException("This server instance was already started before.");
+            log.warn("This server instance was already started before.");
+            return;
         }
+        
+        final Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("policy-file-response", flexPolicyResponse);
+        
         channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
                 Executors.newCachedThreadPool(), workersCount);
         serverBootstrap = new ServerBootstrap(channelFactory);
@@ -247,9 +250,11 @@ public class SLF4FxServer
             public ChannelPipeline getPipeline()
                 throws Exception
             {
-                MessageHandler handler = new MessageHandler(SLF4FxServer.this.categoryPrefix,
-                        SLF4FxServer.this.credentials);
-                return Channels.pipeline(new MessageFrameDecoder(), handler, new MessageFrameEncoder());
+                return Channels.pipeline(
+                        new MessageFrameDecoder(),
+                        new MessageHandler(SLF4FxServer.this.categoryPrefix, SLF4FxServer.this.credentials,
+                                Collections.unmodifiableMap(parameters)), 
+                        new MessageFrameEncoder());
             }
         });
         serverChannel = serverBootstrap.bind(localAddress);
