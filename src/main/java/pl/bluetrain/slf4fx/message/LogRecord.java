@@ -1,7 +1,5 @@
 package pl.bluetrain.slf4fx.message;
 
-import java.lang.invoke.MethodHandles;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +7,7 @@ import pl.bluetrain.slf4fx.MessageType;
 
 public class LogRecord extends InboundMessage
 {
-    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final Logger log = LoggerFactory.getLogger(LogRecord.class);
     
     static Decoder decoder()
     {

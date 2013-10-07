@@ -1,6 +1,5 @@
 package pl.bluetrain.slf4fx.message;
 
-import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -21,7 +20,7 @@ import pl.bluetrain.slf4fx.MessageType;
  */
 public abstract class InboundMessage
 {
-    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final Logger log = LoggerFactory.getLogger(InboundMessage.class);
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final Decoder[] decoders = { AccessRequest.decoder(), LogRecord.decoder() };
     
@@ -51,7 +50,7 @@ public abstract class InboundMessage
     static abstract class Decoder
     {
         private final MessageType tag;
-        private static ThreadLocal<ChannelBuffer> buffer = new ThreadLocal<>();
+        private static ThreadLocal<ChannelBuffer> buffer = new ThreadLocal<ChannelBuffer>();
         
         Decoder(MessageType tag)
         {

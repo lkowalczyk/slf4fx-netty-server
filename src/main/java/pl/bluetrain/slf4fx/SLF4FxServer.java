@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -36,18 +35,17 @@ import org.slf4j.LoggerFactory;
  * <li>The {@link #setCredentials(Map)} method does not accept null argument and
  * it will also reject a map which contains null key or null value.
  * 
- * 
+ * @author Łukasz Kowalczyk <lukasz@bluetrain.pl>
  */
 public class SLF4FxServer
 {
-    @SuppressWarnings("unused")
-    private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private final Logger log = LoggerFactory.getLogger(SLF4FxServer.class);
     
     private SocketAddress localAddress = new InetSocketAddress("localhost", 18888);
-    private Map<String, String> credentials = new HashMap<>();
+    private Map<String, String> credentials = new HashMap<String,String>();
     private int sessionTimeout = 60;
     private int workersCount = 1;
-    private Map<String, Object> bootstrapOptions = new HashMap<>();
+    private Map<String, Object> bootstrapOptions = new HashMap<String,Object>();
     private String categoryPrefix = "slf4fx";
     
     private ServerBootstrap serverBootstrap;
@@ -86,7 +84,6 @@ public class SLF4FxServer
         
         this.serverBootstrap.setPipelineFactory(new ChannelPipelineFactory()
         {
-            @Override
             public ChannelPipeline getPipeline()
                 throws Exception
             {
@@ -139,7 +136,7 @@ public class SLF4FxServer
             if (entry.getKey() == null || entry.getValue() == null)
                 throw new IllegalArgumentException("Each credential must have a non-null applicationId and secret");
         }
-        this.credentials = new HashMap<>(credentials);
+        this.credentials = new HashMap<String,String>(credentials);
     }
     
     public Map<String, String> getCredentials()
@@ -160,7 +157,8 @@ public class SLF4FxServer
     public void setFlexPolicyResponse(final File file)
         throws IOException
     {
-        try (Reader reader = new FileReader(file))
+        Reader reader = new FileReader(file);
+        try
         {
             StringBuilder sb = new StringBuilder();
             char[] buffer = new char[4096];
@@ -170,6 +168,17 @@ public class SLF4FxServer
                 sb.append(buffer, 0, size);
             }
             setFlexPolicyResponse(sb.toString());
+        }
+        finally
+        {
+            try
+            {
+                reader.close();
+            }
+            catch (IOException e)
+            {
+                // ignore
+            }
         }
     }
     
@@ -226,6 +235,7 @@ public class SLF4FxServer
     {
         if (serverBootstrap != null)
         {
+            
             throw new IllegalStateException("This server instance was already started before.");
         }
         channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
@@ -234,7 +244,6 @@ public class SLF4FxServer
         serverBootstrap.setOptions(bootstrapOptions);
         serverBootstrap.setPipelineFactory(new ChannelPipelineFactory()
         {
-            @Override
             public ChannelPipeline getPipeline()
                 throws Exception
             {

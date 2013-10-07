@@ -1,7 +1,5 @@
 package pl.bluetrain.slf4fx;
 
-import java.lang.invoke.MethodHandles;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -20,7 +18,7 @@ import pl.bluetrain.slf4fx.message.UnknownMessageException;
  */
 class MessageFrameDecoder extends FrameDecoder
 {
-    private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private final Logger log = LoggerFactory.getLogger(MessageFrameDecoder.class);
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer)

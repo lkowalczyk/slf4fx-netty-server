@@ -1,6 +1,5 @@
 package pl.bluetrain.slf4fx;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -17,7 +16,7 @@ import pl.bluetrain.slf4fx.message.LogRecord;
 
 class MessageHandler extends SimpleChannelHandler
 {
-    private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private final Logger log = LoggerFactory.getLogger(MessageHandler.class);
     private final String categoryPrefix;
     private final Map<String, String> credentials;
     private String applicationId;
