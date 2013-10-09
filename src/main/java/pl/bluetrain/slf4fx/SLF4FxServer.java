@@ -31,9 +31,16 @@ import org.slf4j.LoggerFactory;
  * This is designed to be a drop-in replacement for the original SLF4FxServer
  * although with a few twists you should be aware of.
  * <ul>
- * <li>The {@link setDefaultLocalAddress} method does not accept null argument.
+ * <li>The {@link setDefaultLocalAddress} method does not accept null argument
+ *  (throws NullPointerException).
+ *  
  * <li>The {@link #setCredentials(Map)} method does not accept null argument and
- * it will also reject a map which contains null key or null value.
+ *  it will also reject a map which contains a null key or a null value.
+ *  
+ * <li>{@link #stop()} throws InterruptedException.
+ * 
+ * <li>{@link #setReaderBufferSize(int)} is unimplemented, calling it has no effect.
+ * </ul>
  * 
  * @author Łukasz Kowalczyk <lukasz@bluetrain.pl>
  */
@@ -82,18 +89,6 @@ public class SLF4FxServer
         
         bootstrapOptions.put("child.tcpNoDelay", true);
         bootstrapOptions.put("child.keepAlive", true);
-        
-        //        this.serverBootstrap.setPipelineFactory(new ChannelPipelineFactory()
-        //        {
-        //            public ChannelPipeline getPipeline()
-        //                throws Exception
-        //            {
-        //                MessageHandler handler = new MessageHandler(SLF4FxServer.this.categoryPrefix,
-        //                        SLF4FxServer.this.credentials);
-        //                return Channels.pipeline(new MessageFrameDecoder(), handler, new MessageFrameEncoder());
-        //            }
-        //        });
-        //        this.serverBootstrap.setOptions(serverBootstrapOptions);
     }
     
     public void setDefaultLocalAddress(final SocketAddress localAddress)
@@ -261,10 +256,18 @@ public class SLF4FxServer
     }
     
     /**
-     * Stops the SLF4Fx server. This method catches and ignores
-     * InterruptedException.
+     * Stops the SLF4Fx server.
      */
-    public synchronized void stop()
+    public synchronized void stop() throws InterruptedException
+    {
+        stop(false);
+    }
+    
+    /**
+     * Stops the SLF4Fx server, waits indefinitely for clients to disconnect
+     * and for the workers to stop. 
+     */
+    public synchronized void stopUninterruptibly()
     {
         try
         {
@@ -282,7 +285,7 @@ public class SLF4FxServer
      * @param uninterruptibly
      *            true if InterruptedException should be ignored.
      */
-    public synchronized void stop(boolean uninterruptibly)
+    private synchronized void stop(boolean uninterruptibly)
         throws InterruptedException
     {
         if (serverChannel != null)

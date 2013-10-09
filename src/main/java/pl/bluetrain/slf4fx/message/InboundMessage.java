@@ -23,9 +23,18 @@ public abstract class InboundMessage
     private ChannelBuffer buffer;
 
     /**
-     * Attempts parsing a message.
-     * @return An concrete InboundMessage descendant or null if the message is
-     *  of different type than the instantiated class.
+     * Initializes this object with the binary data from buffer. The actual decoding
+     * is performed by the {@link #doDecode()} method implemented by each concrete
+     * class.
+     * <p>
+     * If this method throws a checked exception the object is left in an undefined state
+     * and the buffer's mark is reset to its initial state as of entering this method.
+     * <p>
+     * If this method throws an unchecked exception, the buffer mark is left in
+     * a random position and the connection to the client should be closed.
+     *  
+     * @return A concrete InboundMessage descendant or null if a message is of
+     *  type incompatible with the concrete InboundMessage subclass.
      * @throws BufferUnderrunException if there is not enough data in the ChannelBuffer.
      * @throws MalformedMessageException if the message is of correct type but cannot be parsed.
      */
