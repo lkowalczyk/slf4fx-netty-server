@@ -1,10 +1,10 @@
-package pl.bluetrain.slf4fx.message;
+package io.github.lkowalczyk.slf4fx.message;
 
 
 /**
  * Informs about accepting or rejecting the access request.
  * 
- * @author lkowalczyk
+ * @author Łukasz Kowalczyk &lt;lkowalczyk@gmail.com&gt;
  */
 public class AccessResponse extends OutboundMessage
 {

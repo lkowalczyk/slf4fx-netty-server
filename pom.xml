@@ -1,20 +1,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>pl.bluetrain</groupId>
-	<artifactId>slf4fx-netty-server</artifactId>
-	<packaging>jar</packaging>
+    <groupId>io.github.lkowalczyk</groupId>
+    <artifactId>slf4fx-netty-server</artifactId>
+    <packaging>jar</packaging>
 
-	<name>slf4fx-netty-server</name>
+    <name>slf4fx-netty-server</name>
 
-  <properties>
+    <url>https://github.com/lkowalczyk/slf4fx-netty-server</url>
+    <version>0.6.0</version>
+
+    <properties>
         <jdk.version>1.7</jdk.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  
-  <build>
-    <plugins>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.4.2</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <pushChanges>false</pushChanges>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -29,29 +41,26 @@
                     <target>${jdk.version}</target>
                 </configuration>
             </plugin>
-    </plugins>
-  </build>
+        </plugins>
+    </build>
 
-  <dependencies>
-    <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.11</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>1.7.5</version>
-    </dependency>
-    <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty</artifactId>
-        <!-- Use 'netty-all' for 4.0 or above -->
-        <version>3.6.6.Final</version>
-        <scope>compile</scope>
-    </dependency>
-  </dependencies>
-  <url>https://github.com/lkowalczyk/slf4fx-netty-server</url>
-  <version>0.5.0</version>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.0.27.Final</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 </project>

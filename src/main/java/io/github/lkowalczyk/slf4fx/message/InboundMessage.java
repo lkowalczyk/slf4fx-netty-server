@@ -1,4 +1,8 @@
-package pl.bluetrain.slf4fx.message;
+package io.github.lkowalczyk.slf4fx.message;
+
+import io.netty.buffer.ByteBuf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -7,20 +11,16 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Base class for incoming messages.
  * 
- * @author lkowalczyk
+ * @author Łukasz Kowalczyk &lt;lkowalczyk@gmail.com&gt;
  */
 public abstract class InboundMessage
 {
     private static final Logger log = LoggerFactory.getLogger(InboundMessage.class);
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    private ChannelBuffer buffer;
+    private ByteBuf buffer;
 
     /**
      * Initializes this object with the binary data from buffer. The actual decoding
@@ -38,11 +38,11 @@ public abstract class InboundMessage
      * @throws BufferUnderrunException if there is not enough data in the ChannelBuffer.
      * @throws MalformedMessageException if the message is of correct type but cannot be parsed.
      */
-    public InboundMessage tryDecode(ChannelBuffer buffer) throws BufferUnderrunException, MalformedMessageException
+    public InboundMessage tryDecode(ByteBuf buffer) throws BufferUnderrunException, MalformedMessageException
     {
         if (buffer == null)
             throw new NullPointerException("buffer");
-        if (false == buffer.readable())
+        if (!buffer.isReadable())
             throw new BufferUnderrunException();
         if (getType().getTag() != buffer.getUnsignedByte(0))
             return null;
@@ -52,12 +52,7 @@ public abstract class InboundMessage
         {
             doDecode();
         }
-        catch (BufferUnderrunException e)
-        {
-            buffer.resetReaderIndex();
-            throw e;
-        }
-        catch (MalformedMessageException e)
+        catch (BufferUnderrunException | MalformedMessageException e)
         {
             buffer.resetReaderIndex();
             throw e;
@@ -124,7 +119,6 @@ public abstract class InboundMessage
      * If an invalid UTF-8 sequence is found, it is replaced with a space
      * and a warning is logged.
      * 
-     * @param buffer
      * @return
      * @throws BufferUnderrunException
      */
@@ -166,9 +160,7 @@ public abstract class InboundMessage
                 }
             }
             
-            String result = cb.toString();
-            
-            return result;
+            return cb.toString();
         }
         catch (IndexOutOfBoundsException e)
         {

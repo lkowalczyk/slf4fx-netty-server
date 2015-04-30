@@ -1,11 +1,11 @@
-package pl.bluetrain.slf4fx.message;
+package io.github.lkowalczyk.slf4fx.message;
 
 import java.io.UnsupportedEncodingException;
 
 /**
  * Preset response to {@code &lt;policy-file-request/>}.
  * 
- * @author Łukasz Kowalczyk <lukasz@bluetrain.pl>
+ * @author Łukasz Kowalczyk &lt;lkowalczyk@gmail.com&gt;
  */
 public class PolicyFileResponse extends OutboundMessage
 {

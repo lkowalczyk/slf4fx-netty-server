@@ -1,27 +1,24 @@
-package pl.bluetrain.slf4fx;
+package io.github.lkowalczyk.slf4fx;
 
-import java.util.Map;
-
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.github.lkowalczyk.slf4fx.message.AccessRequest;
+import io.github.lkowalczyk.slf4fx.message.AccessResponse;
+import io.github.lkowalczyk.slf4fx.message.LogRecord;
+import io.github.lkowalczyk.slf4fx.message.OutboundMessage;
+import io.github.lkowalczyk.slf4fx.message.PolicyFileRequest;
+import io.github.lkowalczyk.slf4fx.message.PolicyFileResponse;
 
-import pl.bluetrain.slf4fx.message.AccessRequest;
-import pl.bluetrain.slf4fx.message.AccessResponse;
-import pl.bluetrain.slf4fx.message.LogRecord;
-import pl.bluetrain.slf4fx.message.OutboundMessage;
-import pl.bluetrain.slf4fx.message.PolicyFileRequest;
-import pl.bluetrain.slf4fx.message.PolicyFileResponse;
+import java.util.Map;
 
 /**
  * Handles incoming messages. An instance is NOT shareable among pipelines.
  * 
- * @author Łukasz Kowalczyk <lukasz@bluetrain.pl>
+ * @author Łukasz Kowalczyk &lt;lkowalczyk@gmail.com&gt;
  */
-class MessageHandler extends SimpleChannelHandler
+class MessageHandler extends ChannelInboundHandlerAdapter
 {
     private final Logger log = LoggerFactory.getLogger(MessageHandler.class);
     private final String categoryPrefix;
@@ -35,32 +32,38 @@ class MessageHandler extends SimpleChannelHandler
         this.credentials = credentials;
         this.policyFileResponse = (String) parameters.get("policy-file-response");
     }
-    
+
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent ev)
-        throws Exception
-    {
-        if (ev.getMessage() instanceof LogRecord)
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        log.trace("Handling {}", msg);
+
+        if (msg instanceof LogRecord)
         {
-            LogRecord message = (LogRecord) ev.getMessage();
+            LogRecord message = (LogRecord) msg;
             handleLogRecord(message);
+            return;
         }
 
-        if (ev.getMessage() instanceof AccessRequest)
+        OutboundMessage response;
+
+        if (msg instanceof AccessRequest)
         {
-            AccessRequest message = (AccessRequest) ev.getMessage();
-            OutboundMessage response = handleAccessRequest(message);
-            Channels.write(ev.getChannel(), response);
+            AccessRequest message = (AccessRequest) msg;
+            response = handleAccessRequest(message);
         }
-        
-        if (ev.getMessage() instanceof PolicyFileRequest)
+        else if (msg instanceof PolicyFileRequest)
         {
-            PolicyFileRequest message = (PolicyFileRequest) ev.getMessage();
-            OutboundMessage response = handlePolicyFileRequest(message, policyFileResponse);
-            Channels.write(ev.getChannel(), response);
+            PolicyFileRequest message = (PolicyFileRequest) msg;
+            response = handlePolicyFileRequest(message, policyFileResponse);
         }
+        else {
+            throw new IllegalArgumentException("Nieznany komunikat: " + msg);
+        }
+
+        log.trace("Response for {}: {}", msg, response);
+        ctx.writeAndFlush(response);
     }
-    
+
     private AccessResponse handleAccessRequest(AccessRequest message)
     {
         
@@ -97,6 +100,7 @@ class MessageHandler extends SimpleChannelHandler
         category.append('.');
         category.append(applicationId).append('.').append(message.getCategory());
         Logger logger = LoggerFactory.getLogger(category.toString());
+        log.debug("Logging {} to {}", message.getMessage(), category);
         switch (message.getLevel())
         {
             case DEBUG:

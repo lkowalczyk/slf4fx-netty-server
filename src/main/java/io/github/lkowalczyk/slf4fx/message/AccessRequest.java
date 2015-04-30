@@ -1,4 +1,4 @@
-package pl.bluetrain.slf4fx.message;
+package io.github.lkowalczyk.slf4fx.message;
 
 
 public class AccessRequest extends InboundMessage
