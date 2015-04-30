@@ -35,8 +35,6 @@ class MessageHandler extends ChannelInboundHandlerAdapter
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        log.trace("Handling {}", msg);
-
         if (msg instanceof LogRecord)
         {
             LogRecord message = (LogRecord) msg;
@@ -60,7 +58,6 @@ class MessageHandler extends ChannelInboundHandlerAdapter
             throw new IllegalArgumentException("Nieznany komunikat: " + msg);
         }
 
-        log.trace("Response for {}: {}", msg, response);
         ctx.writeAndFlush(response);
     }
 
@@ -100,7 +97,6 @@ class MessageHandler extends ChannelInboundHandlerAdapter
         category.append('.');
         category.append(applicationId).append('.').append(message.getCategory());
         Logger logger = LoggerFactory.getLogger(category.toString());
-        log.debug("Logging {} to {}", message.getMessage(), category);
         switch (message.getLevel())
         {
             case DEBUG:

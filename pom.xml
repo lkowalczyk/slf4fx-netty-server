@@ -9,7 +9,7 @@
     <name>slf4fx-netty-server</name>
 
     <url>https://github.com/lkowalczyk/slf4fx-netty-server</url>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
 
     <properties>
         <jdk.version>1.7</jdk.version>

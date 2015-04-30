@@ -49,7 +49,7 @@ public class LogRecord extends InboundMessage
                 case 3:
                     return Level.DEBUG;
                 default:
-                    log.debug("Unknown logging level: {}", levelValue);
+                    log.warn("Unknown logging level: {}, using INFO", levelValue);
                     return Level.INFO;
             }
         }

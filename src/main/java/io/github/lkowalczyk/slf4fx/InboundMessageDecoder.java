@@ -45,12 +45,10 @@ class InboundMessageDecoder extends ByteToMessageDecoder
             else {
                 throw new IllegalArgumentException("Unknown message type: " + in.getByte(0));
             }
-
-            log.debug("Decoded {}", message);
         }
         catch (BufferUnderrunException e)
         {
-            log.debug(e.getMessage(), e);
+            // ignored
         }
         catch (Exception e)
         {

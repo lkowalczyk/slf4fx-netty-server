@@ -221,7 +221,6 @@ public class SLF4FxServer {
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, true);
 
-        log.trace("Binding to {}", localAddress);
         future = serverBootstrap.bind(localAddress);
         future.awaitUninterruptibly();
         assert future.isDone();
@@ -231,9 +230,6 @@ public class SLF4FxServer {
         else if (!future.isSuccess()) {
             log.error("Binding to {} failed", localAddress);
         }
-        else {
-            log.trace("Bound to {}", localAddress);
-        }
     }
 
     /**
@@ -242,12 +238,10 @@ public class SLF4FxServer {
      */
     public synchronized void stop() throws InterruptedException {
         if (future != null) {
-            log.trace("Closing");
             future.channel().close();
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
             future.channel().closeFuture().sync();
-            log.trace("Closed");
             future = null;
         }
     }

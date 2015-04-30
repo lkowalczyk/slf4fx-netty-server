@@ -17,7 +17,6 @@ public class OutboundMessageEncoder extends MessageToByteEncoder<OutboundMessage
 
     @Override
     protected void encode(ChannelHandlerContext ctx, OutboundMessage msg, ByteBuf out) throws Exception {
-        log.trace("Encoding {}", msg);
         out.writeBytes(msg.getBytes());
     }
 }
